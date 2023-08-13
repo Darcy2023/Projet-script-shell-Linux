@@ -14,7 +14,7 @@ A chaque fois le test effectué, d'envoyer une alarme OK ou Critical, warning et
 PATH=/usr/sbin:/usr/sbin:/usr/sbin
 
 SMYSQL=sudo service mysql status
-if [ $(SMYSQL)=~'stop' ]
+if [ $(SMYSQL=~ 'stop')]
 then
 	$(SMYSQL)>SMYQLS.txt
 	echo "Le service MySQL est arrété" |mail -s "Service MySQL arrété" yvandarcy12@gmail.com
