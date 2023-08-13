@@ -13,30 +13,20 @@ A chaque fois le test effectué, d'envoyer une alarme OK ou Critical, warning et
 
 PATH=/usr/sbin:/usr/sbin:/usr/sbin
 
-if ["$(service mysql status)"=~ "start/running"];
-
+SMYSQL=sudo service mysql status
+if [ $(SMYSQL)=~'stop' ]
 then
-
-  echo OK >> yvandarcy12@gmail.com;
-
-elif["$(service mysql status)"=~"stop"];
-
-then
-
-  echo Warning >> yvandarcy12@gmail.com;
-
-elif["$(service mysql status)"=~"failed"];
-
-then
-
-  echo Critical >> yvandarcy12@gmail.com;
-
-else["$(service mysql status)"=~"unreachable"];
-
-then
-
-  echo Unknown >> yvandarcy12@gmail.com;
-
+	$(SMYSQL)>SMYQLS.txt
+	echo "Le service MySQL est arrété" |mail -s "Service MySQL arrété" yvandarcy12@gmail.com
+elif [ $(SMYSQL)=~'failed' ]
+	$(SMYSQL)>SMYQLS.txt
+	echo "Le service MySQL ne fonctionne pas" |mail -s "Service MySQL arrété" yvandarcy12@gmail.com
+	$(SMYSQL)>SMYQLS.txt
+elif [ $(SMYSQL)=~'inactive' ]
+	echo "Le service MySQL est inactif" |mail -s "Service MySQL est inactif" yvandarcy12@gmail.com
+	$(SMYSQL)>SMYQLS.txt
+else [$(SMYSQL)=~'active']	
+	echo "Le service MySQL est actif" |mail -s "Service MySQL est actif" yvandarcy12@gmail.com
 fi
 
 ## Alarme sur les services web apache2
@@ -49,59 +39,41 @@ A chaque fois le test effectué, d'envoyer une alarme OK ou Critical, warning et
 PATH=/usr/sbin:/usr/sbin:/usr/sbin
 echo le serveur web fonctionne bien?
 
-if ["$(service apache2 status)"=~ "start/running"];
-
+SAPACHE= systemctl status apache2 | grep 'active'
+if [ $(SAPACHE)=~'stop' ]
 then
-
-  echo OK >> yvandarcy12@gmail.com;
-
-elif["$(service apache2 status)"=~"stop"];
-
-then
-
-  echo Warning >> yvandarcy12@gmail.com;
-
-elif["$(service apache2 status)"=~"failed"];
-
-then
-
-  echo Critical >> yvandarcy12@gmail.com;
-
-
-else["$(service apache2 status)"=~"unreachable"];
-
-then
-
-  echo Unknown >> yvandarcy12@gmail.com;
+	$(SAPACHE)>SAPACHE.txt
+	echo "Le service apache2 est arrété" |mail -s "Service apache arrété" yvandarcy12@gmail.com
+elif [ $(SAPACHE)=~'failed' ]
+	$(SAPACHE)>SAPACHE.txt
+	echo "Le service apache2 ne fonctionne pas" |mail -s "Service apache arrété" yvandarcy12@gmail.com
+elif [ $(SAPACHE)=~'inactive' ]
+	$(SAPACHE)>SAPACHE.txt
+	echo "Le service apache2 est inactif" |mail -s "Service apache est inactif" yvandarcy12@gmail.com
+else [$(SAPACHE)=~'active']	
+	echo "Le service apache2 est actif" |mail -s "Service MySQL est actif" yvandarcy12@gmail.com
 fi
+
 ## Alarme sur les disques pleins
 
 Le script ci dessous permet de vérifier que les disques du fichier systeme sont pleins?
 
-A chaque fois le test effectué, d'envoyer une alarme OK si les disques sont inférieur ou egal à 50%, warning s'ils sont à 75%  et Critical s'ils sont à 95% et envoyer les alarmes à l'adresse mail suivant : yvandarcy12@gmail.com de l'administrateur. 
+A chaque fois le test effectué, d'envoyer une alarme Dique est plein si les disques sont à plus de 80% et envoyer les alarmes à l'adresse mail suivant : yvandarcy12@gmail.com de l'administrateur. 
 #! bin/bash
 
 PATH=/usr/sbin:/usr/sbin:/usr/sbin
 
 echo les disques du systeme de fichier sont pleins
-
-
-if ["$(df . -h)"=>"95%"];
+DISKUTILISE=$(df -h|awk '{print $3}' )
+if [ $DISKUTILISE -gt 80% ]
 then
-echo disk usage is critical >> yvandarcy12@gmail.com;
-
-elif ["$(df . -h)"=>"75%"];
-then
-echo disk usage warning >> yvandarcy12@gmail.com;
-
-else ["$(df . -h)"<="50%"];
-then
-echo disk usage OK >> yvandarcy12@gmail.com;
-
+	$DISKUTILISE> disqueplein.txt
+	echo "Le disque dur est utilisé à plus de 80 %" |mail -s "Utilisation de disque" yvandarcy12@gmail.com
 fi
+
 ## Alarme sur le processus qui consomme plus l'espace memoire
 
-Le script ci dessous permet de vérifier le processus qui consomme beaucoup d'espace memoire qui dépasse 100Mo.
+Le script ci dessous permet de vérifier le processus qui consomme beaucoup d'espace memoire qui dépasse ou égale 100Mo.
 
 A chaque fois le test effectué, d'envoyer une alarme : Attention, un processus consomme un grand espace memoire envoyer à l'adresse mail suivant : yvandarcy12@gmail.com de l'administrateur. 
 
@@ -111,7 +83,7 @@ PATH=/usr/sbin:/usr/sbin:/usr/sbin
 
 echo le processus qui consomme un grand espace memoire
 
-if ["$(ps -eo pcpu,pid,user,args --no-headers |\sort -t. -nk1,2 -k4,4 -r |\head -n 1 |\ awk'{print "\t"$1"\t"$2"\t"$3"\t"$4" "$5}')">"100Mo"];
+if ["$(ps -eo pcpu,pid,user,args --no-headers |\sort -t. -nk1,2 -k4,4 -r |\head -n 1 |\ awk'{print "\t"$1"\t"$2"\t"$3"\t"$4" "$5}')"-ge "100Mo"];
 then
 echo Attention, un processus consomme un grand espace memoire >> yvandarcy12@gmail.com;
 
